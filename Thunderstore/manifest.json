@@ -1,6 +1,6 @@
 {
   "name": "FinFix",
-  "version_number": "1.0.0",
+  "version_number": "1.0.1",
   "website_url": "https://github.com/Judgy53/FinFix",
   "description": "Attempts to fix Breaching Fin broken damage multiplier and its interaction with Deathmark.",
   "dependencies": [

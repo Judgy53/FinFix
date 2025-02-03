@@ -11,7 +11,7 @@ namespace FinFix
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Judgy";
         public const string PluginName = "FinFix";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "1.0.1";
         
         public static string PluginDirectory { get; private set; }
 

@@ -2,10 +2,12 @@ using BepInEx;
 using System.Reflection;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
+using R2API;
 
 namespace FinFix
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
+    [BepInDependency(ProcTypeAPI.PluginGUID)]
     public class FinFixPlugin : BaseUnityPlugin
     {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
@@ -15,9 +17,8 @@ namespace FinFix
         
         public static string PluginDirectory { get; private set; }
 
-        private readonly RoR2.ProcType _customJuggleProcType = RoR2.ProcType.Count + 1;
+        private ModdedProcType _customJuggleProcType;
         private int _juggleStacksBefore = 0;
-
 
         public void Awake()
         {
@@ -25,6 +26,8 @@ namespace FinFix
 
             Log.Init(Logger);
             FinFixConfig.Init(Config);
+
+            _customJuggleProcType = ProcTypeAPI.ReserveProcType();
 
             On.RoR2.HealthComponent.TakeDamageProcess += RememberStacksBeforeDamageCalc;
             On.RoR2.KnockbackFinUtil.ModifyDamageInfo += On_KnockbackFinUtil_ModifyDamageInfo;
@@ -52,11 +55,11 @@ namespace FinFix
                     damageInfo.damageColorIndex = RoR2.DamageColorIndex.KnockBackHitEnemies;
                 }
 
-                if (FinFixConfig.FixDoubleDip.Value == false || damageInfo.procChainMask.HasProc(_customJuggleProcType) == false)
+                if (FinFixConfig.FixDoubleDip.Value == false || damageInfo.procChainMask.HasModdedProc(_customJuggleProcType) == false)
                 {
                     float addedDamage = buffCount * 0.2f * damageInfo.damage;
                     damageInfo.damage += addedDamage;
-                    damageInfo.procChainMask.AddProc(_customJuggleProcType); //Add custom proc to prevent double dip
+                    damageInfo.procChainMask.AddModdedProc(_customJuggleProcType); //Add custom proc to prevent double dip
                 }
             }
         }

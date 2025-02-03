@@ -26,6 +26,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Reference Include="R2API.ProcType">
+	    <HintPath>libs\R2API.ProcType.dll</HintPath>
+	  </Reference>
 	  <Reference Include="RiskOfOptions">
 	    <HintPath>libs\RiskOfOptions.dll</HintPath>
 	  </Reference>

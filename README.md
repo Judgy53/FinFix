@@ -1,7 +1,7 @@
 # FinFix
 Risk of Rain 2 mod. Attempts to fix Breaching Fin broken damage multiplier and its interaction with Deathmark.
 
-![](./fix_showcase.png)
+![](https://raw.githubusercontent.com/Judgy53/FinFix/refs/heads/main/fix_showcase.png)
 
 ## Configuration
 Every configuration entry is editable in-game via the [Risk Of Options](https://thunderstore.io/package/Rune580/Risk_Of_Options/) mod.

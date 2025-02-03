@@ -68,6 +68,7 @@ New-Item -ItemType Directory -Path "releases" -Force | Out-Null
 # Copy files to tmp
 Copy-Item -Path "$ManifestPath" -Destination "$Tmp\" -Force
 Copy-Item -Path "README.md" -Destination "$Tmp\" -Force
+Copy-Item -Path "fix_showcase.png" -Destination "$Tmp\" -Force
 Copy-Item -Path "icon.png" -Destination "$Tmp\" -Force
 Copy-Item -Path "CHANGELOG.md" -Destination "$Tmp\" -Force
 Copy-Item -Path "LICENSE" -Destination "$Tmp\" -Force

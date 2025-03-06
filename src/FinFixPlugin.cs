@@ -1,7 +1,4 @@
 using BepInEx;
-using System.Reflection;
-using MonoMod.Cil;
-using Mono.Cecil.Cil;
 using R2API;
 
 namespace FinFix
@@ -30,8 +27,7 @@ namespace FinFix
             _customJuggleProcType = ProcTypeAPI.ReserveProcType();
 
             On.RoR2.HealthComponent.TakeDamageProcess += RememberStacksBeforeDamageCalc;
-            On.RoR2.KnockbackFinUtil.ModifyDamageInfo += On_KnockbackFinUtil_ModifyDamageInfo;
-            IL.RoR2.GlobalEventManager.ProcessHitEnemy += IL_GlobalEventManager_ProcessHitEnemy;
+            On.RoR2.KnockbackFinUtil.ModifyDamageInfo += PreventExponentialDamageMult;
         }
 
         private void RememberStacksBeforeDamageCalc(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, RoR2.HealthComponent self, RoR2.DamageInfo damageInfo)
@@ -41,71 +37,33 @@ namespace FinFix
             orig(self, damageInfo);
         }
 
-        private void On_KnockbackFinUtil_ModifyDamageInfo(On.RoR2.KnockbackFinUtil.orig_ModifyDamageInfo orig, ref RoR2.DamageInfo damageInfo, RoR2.CharacterBody attacker, RoR2.CharacterBody victim)
+        private void PreventExponentialDamageMult(On.RoR2.KnockbackFinUtil.orig_ModifyDamageInfo orig, ref RoR2.DamageInfo damageInfo, RoR2.CharacterBody attacker, RoR2.CharacterBody victim)
         {
-            var buffCount = victim.GetBuffCount(RoR2.DLC2Content.Buffs.KnockUpHitEnemiesJuggleCount);
+            var origBuffCount = victim.GetBuffCount(RoR2.DLC2Content.Buffs.KnockUpHitEnemiesJuggleCount);
+            var buffCount = origBuffCount;
+
+            // if option is enabled, set juggle buff count to "before damage calc" count
             if (FinFixConfig.DelayJuggleStacks.Value)
+            {
+                victim.SetBuffCount(RoR2.DLC2Content.Buffs.KnockUpHitEnemiesJuggleCount.buffIndex, _juggleStacksBefore);
                 buffCount = _juggleStacksBefore;
-
-
-            if (buffCount > 0)
-            {
-                if (!damageInfo.crit)
-                {
-                    damageInfo.damageColorIndex = RoR2.DamageColorIndex.KnockBackHitEnemies;
-                }
-
-                if (FinFixConfig.FixDoubleDip.Value == false || damageInfo.procChainMask.HasModdedProc(_customJuggleProcType) == false)
-                {
-                    float addedDamage = buffCount * 0.2f * damageInfo.damage;
-                    damageInfo.damage += addedDamage;
-                    damageInfo.procChainMask.AddModdedProc(_customJuggleProcType); //Add custom proc to prevent double dip
-                }
             }
+
+            // call orig method and add custom proc if needed
+            if (buffCount > 0 && ShouldPreventDamageIncrease(damageInfo) == false)
+            {
+                orig(ref damageInfo, attacker, victim);
+                damageInfo.procChainMask.AddModdedProc(_customJuggleProcType); //Add custom proc to prevent exponential damage in the proc chain
+            }
+
+            // reset juggle buff count if it was modified
+            if (FinFixConfig.DelayJuggleStacks.Value)
+                victim.SetBuffCount(RoR2.DLC2Content.Buffs.KnockUpHitEnemiesJuggleCount.buffIndex, origBuffCount);
         }
 
-        //Adapted code from ConfigureableDeathMark mod : https://thunderstore.io/package/Nebby/ConfigurableDeathMark/
-        private void IL_GlobalEventManager_ProcessHitEnemy(ILContext il)
+        private bool ShouldPreventDamageIncrease(RoR2.DamageInfo damageInfo)
         {
-            var cursor = new ILCursor(il);
-            bool found = false;
-
-            found = cursor.TryGotoNext(MoveType.After,
-                x => x.MatchLdsfld(typeof(RoR2.BuffCatalog).GetField("debuffBuffIndices", BindingFlags.Public | BindingFlags.Static))
-            );
-
-            if (!found)
-            {
-                Log.Error("GlobalEventManager_ProcessHitEnemy IL Hook failed while searching for BuffCatalog.debuffBuffIndices " + cursor.Index);
-                return;
-            }
-
-            int buffIndex = -1;
-            found = cursor.TryGotoNext(MoveType.After,
-                x => x.MatchLdloc(out buffIndex),
-                x => x.MatchCallvirt(typeof(RoR2.CharacterBody).GetMethod("HasBuff", [typeof(RoR2.BuffIndex)]))
-            );
-
-            if (!found || buffIndex == -1)
-            {
-                Log.Error("GlobalEventManager_ProcessHitEnemy IL Hook failed while searching for characterBody.HasBuff(buffType)");
-                return;
-            }
-
-            cursor.Emit(OpCodes.Ldloc, buffIndex);
-            cursor.EmitDelegate(IsValidDebuffForDeathmark);
-            cursor.Emit(OpCodes.And);
-
-            Log.Info("GlobalEventManager_ProcessHitEnemy IL Hook successfull");
-        }
-
-
-        private bool IsValidDebuffForDeathmark(RoR2.BuffIndex buffIndex)
-        {
-            if (FinFixConfig.FixDeathMark.Value == false)
-                return true;
-
-            return RoR2.BuffCatalog.GetBuffDef(buffIndex) != RoR2.DLC2Content.Buffs.KnockUpHitEnemies;
+            return FinFixConfig.FixDoubleDip.Value && damageInfo.procChainMask.HasModdedProc(_customJuggleProcType);
         }
     }
 }

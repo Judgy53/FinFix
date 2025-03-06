@@ -5,7 +5,6 @@ namespace FinFix
     public class FinFixConfig
     {
         public static ConfigEntry<bool> FixDoubleDip;
-        public static ConfigEntry<bool> FixDeathMark;
         public static ConfigEntry<bool> DelayJuggleStacks;
 
         public static void Init(ConfigFile config) 
@@ -13,10 +12,6 @@ namespace FinFix
             FixDoubleDip = config.Bind("Fixes", "Fix Double Dip", true,
                 "Breaching Fin's damage multiplier is applied multiple times during proc chains."
                 + "\n\nEnabling this setting ensures it's only applied once.");
-
-            FixDeathMark = config.Bind("Fixes", "Fix Death Mark", true,
-                "Breaching Fin applies 2 debuffs to keep track of knock ups, both of which counts for Death Mark."
-                + "\n\nEnabling this setting ensure only one of those 2 debuffs counts for Death Mark.");
 
             DelayJuggleStacks = config.Bind("Fixes", "Delay Juggle Stacks", false,
                 "Breaching Fin's juggle stacks are applied before calculating the damage multiplier. "
@@ -26,6 +21,10 @@ namespace FinFix
 
             if (RiskOfOptionsCompatibility.Enabled)
                 RiskOfOptionsCompatibility.AddConfig();
+
+            //Delete old configs so they can't be edited in R2modman
+            var deathmarkFix = config.Bind(new ConfigDefinition("Fixes", "Fix Death Mark"), false);
+            config.Remove(deathmarkFix.Definition);
         }
     }
 }

@@ -26,7 +26,6 @@ namespace FinFix
             ModSettingsManager.SetModIcon(LoadIcon());
 
             ModSettingsManager.AddOption(new CheckBoxOption(FinFixConfig.FixDoubleDip));
-            ModSettingsManager.AddOption(new CheckBoxOption(FinFixConfig.FixDeathMark));
             ModSettingsManager.AddOption(new CheckBoxOption(FinFixConfig.DelayJuggleStacks));
         }
 
